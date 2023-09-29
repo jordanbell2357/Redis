@@ -1,0 +1,93 @@
+In this unit we'll discuss lists, what functionality they provide and how best
+to use them. Lists provide a basic structure to store and manipulate an
+ordered collection of elements. The order is maintained during insertion and
+removal of elements. As a list construct, duplicate elements or values are allowed.
+Elements can be added or removed at either end of the list. In Redis the ends
+the lists are referred to the left and to the right instead of the head or
+tail. Elements can also be added relative to another element although this is not
+a common use case. Lists provide a simple way to implement stacks, queues and other
+data structures that rely on ordering. The underpinning of all structures in
+Redis is the string data type. So a structure can be comprised only of
+strings not other lists, sets, sorted sets or hashes. So there's no concept of nesting,
+hierarchies or graphs within these data structures. Internally Redis implements
+lists using a doubly linked list. In any implementation there is always
+trade-offs, but adding to the left of the right is performed in constant time
+regardless of the cardinality of the list. Let's take a look how lists are
+organized. We have three elements. Each element has a value A, B and C. Redis uses
+a doubly linked list so element A has a pointer to the next element B and B
+has a previous pointer to A. B and C are similarly related.
+Typically the element on the left of this list is referred to as the head.
+The element on the right is the tail. In Redis we simplify this just to left and
+right. You'll see commands have a prefix of L or R denoting the end of the list
+they are manipulating. For example LPUSH and RPOP. We will use the left and
+right terminology throughout the rest of this course. Let's take a look at some of
+the list commands available. LPUSH will add one or more items to the left of the
+list. RPUSH will do the same but to the right of the list. LPOP removes the
+element on the left and RPOP on the right. Going back to our graphical
+representation, adding an element to the left we use LPUSH. You can see we just
+need to add the next pointers for the new element K and the previous pointers
+for element A. Removing an element from the right we use RPOP. Again we just
+have to update the previous and the next pointers before we can remove the
+element. Let's add some elements into the left of the list with LPUSH. We're going
+to maintain a wait list for the women's 4 by 100 meter final.
+In this LPUSH were adding three orders for "Jane", "Bill" and "Charlie". We can now
+examine the list we created with LLEN and LRANGE.  LLEN is used to find the length of
+the list. LRANGE can be used to retrieve the list or a subset of the
+list. Examining the orders list we can see that LLEN returns three. To retrieve
+elements from the list we can use the LRANGE command. After the key name you'll
+see two additional parameters. The start and stop indexes. Indexes are zero based
+a positive value is computed from the left of the list and a negative value
+from the right of the list. Using zero for the starting index means we want the
+leftmost element of the list. The next argument is the stop index. We specify an
+integer value to give a subset of this list, in this case we use the value minus
+one to indicate that we want to stop at the end of the list. LRANGE returns a
+numbered list of elements. You'll see that the redis-cli starts with the
+number one. Each language driver will return the results in a language specific way.
+For example in Python, the results are returned into an array which is a zero
+based index. Since we added new elements to left with LPUSH you'll notice that
+"Charlie" is at the beginning. In a later chapter will cover the performance
+implication of these commands but its simple enough to understand that if you have a
+million elements in the list then there is a significant impact executing an
+LRANGE to return the whole list: CPU, network and other system resources as
+well as concurrency of the overall system. By adding new elements to the
+left and removing elements from the left we have implemented a stack construct
+out of the list datatype.
+If new elements are added to the right of the list and the remove from the left
+of the list we've implemented a queue. To implement a queue we use RPUSH to
+add new elements to the right-hand side of the list. This has the same arguments
+as LPUSH it just operates on the other end of the list. The item on the left of
+the list is therefore the next element in the queue to process. After adding the
+three elements to the right of the list we now use LRANGE to list the elements.
+We see the list ordered with the oldest first.
+We can use LPOP and RPOP to remove items from the left or the right of the list.
+Each command returns the item that was removed so your code can now process the data returned.
+In later chapters we'll talk about other forms of queues and stacks that
+can be implemented with lists. As we discussed earlier in this unit, Redis
+implements lists as a doubly linked list not as an array. There are a number of
+commands that allow manipulation of lists.
+LINDEX returns the element at the specified index.
+LINSERT adds an element before or after another element. LSET sets the
+value at the specified index. LREM removes a given number of elements with
+a specified value. Redis can navigate to the index in the list by following the
+pointers in the linked list to find and set values. However by following the
+pointers it means, the deeper you go into a list
+then the more expensive the command becomes. We will cover the performance
+implications in a later chapter, but note there is no free lunch here. What are
+some typical use cases for lists? Lists are very general purpose structures but
+a few use cases stand out. When you need to know the most recent activity, for
+example the most recent posts in an activity stream - you know think Facebook
+or Slack - LPUSH can add items to the left of the list. To get the three latest
+entries LRANGE can be used. In this case we specify zero to two to get the latest
+three elements. Remember indexes are zero based.
+LTRIM can be used to prune the list by removing elements on the right. In
+effect we are pruning the oldest entries. In this case we want to retain four
+elements so we specify a zero to three. Another use case is a queue that
+supports a producer-consumer pattern . The order of the list needs to be maintained
+allowing the consumer to receive the events or messages in the same order
+that they were produced. A list provides a simple implementation to back this
+requirement.  LPOP and RPUSH provide a simple way to consume and produce new
+events, in the correct order. To recap: The list data structure
+provides an ordered list. Elements can be added and removed from the left or the
+right of the list. Elements can also be added relative to
+another element. Internally lists are implemented as a doubly linked list
+ensuring a performance solution regardless of cardinality.
