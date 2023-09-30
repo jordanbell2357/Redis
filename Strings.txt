@@ -1,0 +1,137 @@
+
+Strings are the simplest data type that
+can be associated with a key.
+While they're very simple, a number of commands
+can be performed on string data types,
+so it's possible to increment a number stored in a string
+as we'll see.
+If you've used a cache like Memcached,
+then manipulating strings will be very familiar.
+If you've been using a relational database
+or a document store, then this may come as a surprise.
+With a string data type, you can store
+any type of value, text, integers and floating point,
+numbers, and binary data.
+There is a limit of 512 megabytes for any string value.
+JPEGs, Excel spreadsheets, HTML fragments, as well as
+plain old regular text and numbers are permissible.
+Internally, Redis stores encoding of the value, stores
+a knowledge of whether it is a text, number, or binary.
+This can be checked before any command operates on the value.
+There are a number of ways to manipulate strings
+as we'll see.
+First, let's look at incrementing and decrementing
+values.
+We can perform these commands on values
+that are integers and floating point numbers.
+Both INCRBY and DECRBY have shorthand versions.
+INCR and DECR change the value by 1.
+Lastly, there is INCRBYFLOAT to manipulate floating point
+numbers.
+So if Redis considers the data type a string,
+how can you increment and decrement?
+Let's take a look at an example.
+First, let's set the inventory to the women's 4
+by 100 meter final to 1000.
+As we mentioned in the Keys unit,
+it's up to the development team to decide the naming
+convention.
+In this example, we're using colons between two elements
+of our key name.
+Inventory is the domain object.
+4 by 100 meters women's final is the field name or qualifier.
+We have dashes between the words here,
+but spaces could have been used as well.
+You may have other preferences, but consistency of naming
+is critical.
+Obviously, if you allow spaces, then the key name
+will need to be a quoted string.
+When we retrieve the value with the GET command,
+we return the value 1000.
+But notice that the value is quoted. Redis
+returns the value as a string.
+After we've sold a ticket, we'll want to decrement the inventory
+to reflect the sale.
+So let's decrement by 1 with a DECRBY command
+you will first note that the return is
+an integer value of 999.
+So what happened here?
+First, the server looked to the data type of the key.
+It's a string data type, so the DECRBY command is valid.
+Second, the server looked at the encoding of the value.
+It contained an integer value.
+Since a numeric operation was performed on a numeric value,
+a numeric value is therefore returned.
+This is the new value stored at the key.
+So what's the data type of the new value?
+Well, that's pretty simple.
+The resulting value is still a string data type.
+You can see the new string value of 999 with the GET command.
+We can use the TYPE command to find out
+the data type of the key.
+As you can see here, it's a string.
+Later in this chapter, when we cover lists, sets,
+sorted sets, and hashes, you'll see the TYPE command
+return the data type of the structure stored at the key.
+We can also check the encoding of the value
+with the OBJECT command.
+Here you can see the value within the string data type
+is encoded as an integer.
+This is how Redis knows whether it can perform an increment
+or decrement on a stored value in the string data type.
+
+The contents of the string can be changed between text, number,
+binary at any point.
+To Redis, it's always a string data type.
+In this example, we set the key to the text value
+of "Sold Out".
+This is a valid thing to do in Redis.
+Redis supports polymorphism.
+That is the ability to represent different types of data
+over time for the same key.
+Before the command was executed, it
+contained the integer value of 999.
+After this operation, it now contains a text value
+of "Sold Out".
+Taking a look at the encoding, it
+shows this the value is an embstr, which
+represents a text value.
+This has consequences for developers since your code will
+need to be aware that the data type may change,
+and there is no schema enforcing a particular type.
+If you're coming from a relational database,
+this might be quite shocking.
+But trust me, you'll quickly get used to this
+and learn to appreciate the flexibility it provides.
+If you've been using a NoSQL database already,
+then this is something you're already familiar with.
+So what happens if you want to decrement the new value?
+Well, the server goes through the same process
+as described earlier.
+But this time, the encoding of the value is text,
+so it throws an error.
+The DECRBY command only operates on values encoded as integers.
+In the last example, we have set the key to 0, rather than to
+"Sold Out".
+Redis is happy to store, retrieve, manipulate the values
+as required, even when the value is changing between text,
+numeric, and binary values.
+As you can see, once you understand
+that Redis stores values as strings,
+then you can do many powerful commands.
+The first time we do this, it may seem very unnatural,
+especially if you have been used to a database with a strict schema.
+Redis also provides the ability to perform
+bit manipulation of strings.
+This is a powerful concept for managing highly performant
+and compact structures.
+We'll cover the use of manipulation of bit fields
+in a later chapter in this course.
+To recap, strings provide the basic data storage in Redis.
+Some commands will look at the data type
+and encoding to verify whether the command can be applied.
+For example, increment and decrement commands
+require a number to be present.
+Strings can be manipulated and changed regardless of
+whether they contain integers, floats, texts,
+or binary values.

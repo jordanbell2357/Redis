@@ -1,0 +1,37 @@
+Like sets, sorted sets also provide the ability to perform set based operations.
+Unlike sets, sorted sets provide the ability to only store the results into
+another sorted set. You cannot get the result set from the command alone.
+Sorted sets provide the ability to perform an intersection and union but not a
+difference. These commands are equivalent to the set commands so we will not cover
+in any detail here. In a later chapter we'll dive into the complexity of how
+you compute the score to evaluate across elements with the same value but
+different scores. So what are some typical use cases for sorted sets? Let's
+take a look at a couple of obvious ones. Consider a leaderboard for an online
+game. The value of the element is the user ID or their screen name. We have six
+player entries and their respective point totals. The point total is the
+natural school we want to order by. When Jane gets a 50-point bonus we can use
+ZINCRBY by to update her score and ZREVRANGE
+to get the top three for the leaderboard.
+Additionally, if you only want to keep the top three and not the entire list you
+can reduce or cap the size of the list with ZREMRANGEBYRANK.
+ZREMRANGEBYRANK removes the inclusive range of elements specified, so for the top three
+we need to start at the zero element which has the lowest score and we want
+to include up to the fourth element in the list, preserving the top three.
+As we saw with lists, it's simple enough to create a queue or stack. You can pop
+from either end of the list to achieve the processing order you require. A
+specialization is a priority queue where a value is associated with each element
+which governs the ordering or priority in which the elements are retrieved for
+processing. Sorted sets are ideally suited for this purpose, the score can be used
+as priority.
+Elements can be added in any order as we see here. The score maps to the priority. We are
+using a simple one, two, three priority. To get the next item to process in priority
+order, we use ZRANGE and to remove the item from the list we use ZREM. These
+statements can be combined in a transaction to make it a safe operation
+and we'll talk about transactions in a later chapter.
+So to recap: Sorted sets are an ordered collection of unique values. Each value
+has an associated score which is used to store the values in ascending order. The
+sorted set can be traversed in ascending or descending order and can be
+manipulated by score, value and lexicography.
+Finally sorted sets also provide the ability to create a union and
+intersection results from a number of other sets and sorted sets.
+Example use cases for sorted sets would be a priority queue or a leaderboard.

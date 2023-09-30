@@ -1,0 +1,14 @@
+Welcome to this chapter. In the next few chapters we'll cover all the basic Redis
+data structures. We will start with keys and automatic expiration. After that,
+we'll cover strings and how basic values are stored and manipulated. Hashes allow
+manipulations of fields and value pairs. This chapter will finish with lists, the
+first of the collection datatypes. In a later chapter,
+we'll cover the other collection data structures of sets and sorted sets. As we
+discuss each data structure, we'll do a quick dive into typical use cases for
+each. Please utilize the handout links for each unit in this chapter. The links
+will take you to the documentation for the commands. This is a handy resource
+that will provide you with a quick reference as we discuss each data
+structure in detail. Throughout the course, we'll include highlights of the
+command syntax. The documentation  will always provide the
+definitive reference for each command, so I do encourage you to leverage this
+valuable resource.

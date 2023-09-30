@@ -1,0 +1,93 @@
+In this unit we'll discuss hashes, what functionality they provide and how best
+to use them. You can think of hashes as a way to store and retrieve an object. If
+you've used JSON, a Python dictionary, a Java hash map or a PHP array then
+this is a familiar concept. A hash is like a mini key value store within a key.
+Within the hash a number of named fields exist and various commands can be
+applied to those fields. Fields can be added and removed dynamically. The
+structure is essentially schema free. Hashes are extremely memory efficient
+and compact structures. This can be critical when you need to deal with
+hundreds of millions of keys and need low storage overhead and predictable
+performance. The underpinning of all data structures in Redis is the string
+datatype, so a structure can be comprised of strings only not other lists, sets,
+sorted sets or hashes. There is no concept of nesting hierarchies or graphs
+within those data structures. So how are hash is manipulated? HSET is used to
+set one or more fields in a hash. The field names and values are provided in
+pairs to the command. In this example we can see the key "foo". We add three fields
+Field one with a text value of "bar". Field two with a floating-point number of
+3.1415 and Field three with the integer 42. Each field can be accessed
+individually. The key encapsulate all three pairs of
+fields and values. So when the key is removed all the field and value pairs
+are also removed. Using HSET we can create an object that represents the
+Judo event. We can record the capacity, location and other aspects of the event.
+Field names can be anything you want but as we saw with the key names in an
+earlier unit, using a consistent scheme across your domain or application will
+greatly help in the long term. Here we're using a colon to separate parts of the
+field name. For example ticket_price : gold. There are many ways we could have
+modelled the various tiers for ticket prices. This is not the only way to
+achieve this. But this should give you some idea of the flexibility that hashes
+provide. Once you have a hash there are many ways to manipulate it. We can check
+for the existence of a field with HEXISTS. A value of 1 is returned if the
+field exists, 0 if it does not. Since capacity is present we get the value one
+returned. Alternatively you can use HGET to get the fields value. If the field
+does not exist then nil is returned. This saves a round-trip and an execution of a
+second command to retrieve the value . You just need to check if the return is nil,
+in which case the field does not exist. A number of commands are available to
+manipulate the fields within a hash. One or more fields can be removed with the
+HDEL command. Field values can be incremented by integers and floats with
+HINCRBY and HINCRBYFLOAT. Since field values are strings then the
+same rules apply as we saw earlier. Before the value is manipulated,  the
+encoding of the value is checked to ensure that command can be executed.
+HSET and HSETNX will set a field value based on whether the field is present or
+not, just like we saw for SET for Strings. Let's say we have sold some gold tickets.
+You can use the HINCRBY to adjust the available tickets by the number sold. We
+have decremented the field available : gold from 8,000 by 10 and the new value
+of 7990 is returned. There are many commands you can perform
+to get different parts of the hash. HGET an HGETALL retrieve values for one or
+all of the fields. HSCAN iterates over fields matching the supplied glob like
+expression and it's more efficient than HGETALL. HMGET gets field values for a
+named set of field names. HKEYS and HVALS get either all the field names or
+field values, helpful commands when you're in development or test but have
+a significant performance implications. Let's take a look at using HSCAN to get
+all the availability for each ticket category.
+After the key name we specify the start point of the cursor. In this case we want to start at the beginning
+so we use index 0. Next is the matching pattern. We want to get all the
+availability fields so we can use a glob style wildcard.
+We'll cover the details of scan output in a later chapter, but you can see the
+ticket types and current inventory level reported for the two matching ticket types.
+The structure within the hash is dynamic so it can change over time as
+required. We have seen how to add fields but can also remove fields with HDEL.
+After we added the time zone field we can remove it at a later stage with HDEL.
+Because fields are dynamic within the hash it's extraordinary useful to be
+able to add and remove fields on-the-fly avoiding all the traditional challenges
+of schema migration that you'd have to do with a fixed schema systems like a
+relational database. This makes it trivial to deal with an ever-changing
+object structure. For example consuming a third party data
+feed where the structure cannot be guaranteed from one request to another.
+So what are some typical use cases for hashes? Let's take a look at a couple of
+obvious ones. Consider we have a number of API endpoints, for example a
+micro-service REST API request. We want to implement rate limiting. We need to
+track, during a given period of time, how many requests have been made to the same
+endpoint so that we can determine if the limit has been exhausted. A hash can be
+used to keep track of the consumption of each individual endpoint. We can use the
+HINCRBY to reduce a counter each time an API call is made until we reach zero.
+At the start of the next period we can simply use HSET to reset the score to
+the maximum call permitted during the time period for the endpoint.
+Using EXPIRE to set the time to live, the hash can be automatically removed after
+the retention period has been exceeded. We used 86400 seconds since that
+represents seconds in one day. As you saw previously, EXPIRE sets that keys time to
+live not the individual field. If you need field to expire individually then
+you need to represent them in a separate hash. Redis is an obvious choice for a
+session cache. The session object could be simply stored as a Redis string.
+However using an opaque data type means that we cannot use any of the commands
+on that structure. As an alternative is to store the session object in a hash.
+It's simple to set multiple values with HMSET, but individual fields can be
+retrieved with HGET or HMGET. Counters and other metrics you need to track can
+be maintained by HINCRBY. This avoids having to rewrite the whole blob when a
+value changes. This is a significant advantage over simply storing the
+session as a blob. EXPIRE can be used to automatically remove the session from
+the cache, in this case after 60 seconds.
+To recap: Hashes provide an ideal structure to store objects and other structured values. Only a single level is
+supported so you cannot embed lists, sets or other structures within a hash.
+Fields can be modified with a selection of commands and finally you can change the
+structure dynamically by adding or removing fields. Typical use cases for
+hashes are for rate limiting and session stores.

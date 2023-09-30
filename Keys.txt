@@ -1,0 +1,191 @@
+
+Keys are the primary way to access data values
+within Redis.
+The majority of Redis commands operate a key or keys,
+so it makes an excellent place to start.
+Key names are unique by definition.
+Key names are binary safe in Redis.
+This means any binary sequence can
+be used as a key, anything from a simple string like Foo,
+numbers like 42, or 3.1415, or a binary value.
+They can be up to 512 megabytes in size,
+and that may be increased in future versions of Redis.
+However, super long keys are generally not recommended.
+There is a trade-off between having
+reasonable key names versus the amounts of memory
+used to store them.
+This is a similar problem when designing JSON or XML.
+Redis does not have the concept of databases
+but uses the term for type of namespacing,
+which we'll discuss next.
+Within a logical database, a single flat key space exists.
+This means all the key names occupy the same space.
+There is no automatic separation of key names
+into named groups such as buckets or collections.
+The goal of Redis is always to keep things simple--
+so avoiding the complexity of namespace management.
+For the developer, this means that you
+need to give some thought on your namespace
+in conventions you will use.
+A logical database is identified by a zero-based index.
+The default is database 0.
+Within a logical database, the key names
+are unique as mentioned.
+But the same key name can appear in multiple logical databases,
+so logical databases do provide separation of key names.
+In practical terms, they are best
+suited when you need separate key spaces
+for a single application rather than separating
+multiple applications.
+Logical databases also have a number of restrictions.
+Notably, Redis cluster only supports database 0.
+And support for logical databases
+is not ubiquitous across tools and frameworks.
+Many tools and frameworks assume database 0 is used.
+So we will acknowledge logical databases' existence
+and their uses.
+But for the rest of this course, please assume we
+are using database 0.
+Typically, for Redis users, some type of structured key name
+is used, often with a colon as a separator.
+In this example, you can see how a key name is constructed.
+We have used a mixture of tags like user and followers,
+as well as actual values like the user ID of 1000.
+The exact choice of how to structure these key names
+is down to the development team to choose.
+This is an example of a typical convention
+used in the Redis community.
+Whatever you choose, it's important
+that you have a consistent convention used
+throughout the team and the project.
+This becomes critical when multiple teams, projects,
+or microservices will use the same Redis instance.
+We want to avoid any key name clashes across projects,
+use cases, and domains.
+Since a key name is a binary sequence, by implication,
+it's case sensitive.
+In this example, all three key names represent different keys.
+The server is simply doing a binary comparison
+on the key name to determine if the key exists before it's
+retrieved or modified.
+Using the Redis CLI, we can manipulate some key names
+and their values.
+Let me introduce the first two Redis commands.
+Set provides a way to store a value for a given key name.
+We will discuss the additional parametgers
+to set later in this unit.
+GET returns the value at the given key name.
+Let's define a key for a first customer, Fred,
+with the ID of 1000.
+Note how Redis replies with an OK response.
+We can get an individual key with the GET command.
+Note that the CLI marks the response as string using
+the double quotes convention.
+We can now add our second key for customer Jane.
+
+There are two commands for getting
+a list of existing key names in your Redis database.
+The first is called KEYS.
+The second is called SCAN.
+You can use these commands to iterate over
+all keys in the Redis database or to get all keys matching
+a certain pattern.
+Before moving on, it's important to understand the differences
+between these commands.
+The KEYS command always blocks entries iterated over all keys.
+If your database contains millions of keys,
+then running this command may block
+the database for a long time.
+Therefore, it's never a good idea
+to run the KEYS command in production,
+so we won't be using it again in this course.
+But because it's a bit simpler than the scan,
+the KEYS command can be useful for local debugging.
+The SCAN command also blocks, but it only
+iterates over a handful of keys at the time.
+It then turns a slot reference, which
+you can use in subsequent calls to continue your iteration.
+Unlike KEYS, the command is safe of production.
+OK, now for a couple of examples.
+Suppose we want to find all customer keys whose IDs
+begin with a 1.
+In that case, we run the KEYS command
+with the argument customer colon one star.
+This returns two customer keys we just created.
+As mentioned, we can use the KEYS command
+when debugging locally.
+But for any production scenario, we want to use SCAN.
+The syntax of the SCAN command looks like this.
+It takes a slot reference, an optional pattern to match,
+and an optional count.
+Note that these latter arguments, the keywords match
+and count are required.
+To execute SCAN, we start by giving a slot value of zero.
+Here we also provide our matching pattern.
+When the command returns, we may or may not have matches,
+but there will be a new slot ID to plug into the next call.
+It may take many calls, but ultimately we
+get the same results we got when running the KEYS command.
+To force SCAN to look at more keys per call,
+we can pass an account.
+Note that this will make the command block for a longer
+period of time and could have a negative performance
+implications for other clients.
+SCAN will return a cursor value of 0
+when it has no more keys to iterate over.
+
+Keys can be removed in a couple of ways.
+Both will ensure that the key is removed,
+but each has a different performance profile
+the DEL command will remove the key and the memory associated
+with the key.
+This is performed as a blocking operation.
+With UNLINK, the key is unlinked--
+hence the name of the command--
+and will no longer exist.
+The memory associated with the key value
+is reclaimed by an asynchronous process,
+so the UNLINK is a non-blocking command.
+We can use UNLINK to remove customer 1000.
+The return from the command is the number of keys removed--
+in this case, 1.
+When you get a key that does not exist,
+nil is returned, as you can see here.
+You may have already spotted this already,
+but the key does not have to exist
+before you can manipulate it.
+There is no equivalent of create table
+like you would see in relational databases.
+When we execute the set command, on the key that does not exist,
+it causes the key to be created, and the value to be set.
+However, there are times when you only
+want to set the value if the key already exists.
+You could first check with the exist command
+to see if the key is present before using SET.
+EXISTS will return 1 if the key exists and 0 if it does
+not, As you can see here.
+But having two operations-- the exists followed by a set--
+means two round trips Redis and possible inconsistencies
+between the operations.
+Another connection may have set a value
+or removed the key in between those two commands.
+The SET command provides additional promises
+that let you check for the non-existence with NX
+and existence with XX, as you can see in the syntax.
+First, let's create a key representing
+the available tickets, the women's 100-meter final event.
+In this case, 1,000 tickets are available.
+We will use the NX parameter to ensure the key does not
+exist before we set it.
+Next, we try to set the value to sold out, again,
+with the NX parameter.
+Since the key already exists, then the value
+is left unchanged at 1,000.
+Finally, we set the value to 0, this time,
+with the XX parameter, indicating
+that the key must exist before we apply the value.
+Using GET, we can see the value is now 0.
+
+Now that you've seen how to get and set,
+let's take a quick break for a quiz
+before we talk about key expiration.
