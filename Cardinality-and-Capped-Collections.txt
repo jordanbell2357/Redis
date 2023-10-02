@@ -1,0 +1,92 @@
+We have seen how lists, sets, and sorted sets provide alternatives for storing
+collections of strings. There is commonality between these
+structures, but also some unique differences. In this unit we'll look at
+several of these. We're not trying to be exhaustive here, we're just trying to
+illustrate some great features. The cardinality of the collection can be
+found for these data structures as you can see here. "LLEN" for lists, "SCARD" for
+sets, and "ZCARD" for sorted sets. There are a number of use cases where
+you want to retain a specific number of elements. For example, in a leaderboard in
+a game, you may only want to retain the top three for display purposes. And in an
+activity stream like Facebook or Slack, you may want to see the last five posts.
+This is a form of limited or capped collection. In this unit we'll look at
+how you'd achieve this requirement with a list and sorted sets. Let's
+first look at how you would achieve this with a list. "LTRIM" allows you to specify
+the range of elements you want to retain. Trimming can be specified from the left
+with a positive index, or from the right with a negative index. Visualizing a list
+of six elements, "A" through "F",  you can see the elements and index positions. With
+"LTRIM",  you specify the elements you want to retain. "LTRIM" with parameters a 0 and
+4 specifies we want to retain from index 0 through index 4. After executing this
+command, the list would now contain "A" through "E". Element "F" would have been removed. With
+the same starting list with "LTRIM" with parameters 1 and -2, we retain
+from index 1. A negative index results in counting back from the right-hand side.
+Element "F" is -1, so element "E" is -2. After the command executes, we then have
+retained "B" through "E", removing elements "A" and "F".
+Let's take a look at an example of using "LTRIM". List one contains six elements: "A"
+through "F". We want to retain the first five elements. Since indexes are
+zero-based, we need to specify the range from index 0 through index 4. This will
+retain the 5 left most elements. Using "LRANGE", we can see that we've just
+limited or capped this list to the 5 elements. We can also use "LTRIM" to remove
+the rightmost element. We specify the range of elements we want to retain. So
+the start position is index 0. However, the stop index is a negative value. This
+indicates that we want to count from the right of the list. -1 is the
+rightmost end of the list. Specifying -2, we want to retain up to, but
+excluding, the last element on the right hand side. Using "LRANGE", we can now see
+the last element has been trimmed from the list. A typical pattern for
+capped lists is to push an element with "LPUSH" or "RPUSH" and then trim to
+the given size. Here is an example of doing this. The cardinality of "list-one" is
+4. We want to push an element onto the left-hand side and reduce the
+cardinality of the list to 4 afterwards. The new value is added to the list with
+"LPUSH". "LTRIM" is used to retain the elements from the left of the list at
+index 0 through index 3. We will then retain the leftmost four elements. You
+can see the results of "LTRIM" by using "LRANGE". We've added the new value "Z" to
+the left hand side and trimmed the right hand side, and removed the "D" value. So you
+can now see how we can use "LTRIM" to manage the
+elements we want to retain, keeping a specific cardinality of the list. Sorted
+sets have a similar capability as we'll see next. The equivalent of "LTRIM" for
+sorted sets is to use "ZREMRANGEBYRANK". This command uses zero based indexes for
+start and stop, but unlike "LTRIM" where you specify the elements to retain,
+"ZREMRANGEBYRANK" removes the range specified. Visualizing a sorted set of six
+elements, "A" through "F", you can see the elements and index positions. With
+"ZREMRANGEBYRANK", you specify the elements you want to remove. "ZREMRANGEBYRANK"
+with 5 and -1 as parameters specifies we want to remove from index
+5 through to the end, indicated by -1. After executing this
+command, the sorted set now contains "A" through "E". Element "F" would have been
+removed. With the same starting list, with "ZREMRANGEBYRANK" with 4 and -1
+as the parameters, we remove from index 4. A negative index results
+in counting back from the highest-scoring side. Element "F" is -1,
+so element "E" is -2. After the command executes, then we've retained "A"
+through "D", removing elements "E" and "F". Using a sorted set of six elements, let's
+retain the five elements with the lowest score. Since indexes are zero based, we
+want to remove from index five, the sixth element, to the highest-scoring
+element. We used -1 to indicate the highest-scoring element. You can see
+the results when we examine the sorted set with the "ZRANGE" command. If we now want
+to remove the last element, we can again use the -1 as the stop index,
+but this time we use index four as the starting index. You can see the results
+with "ZRANGE". After a new element is added with "ZADD",
+then the sorted set is trimmed with "ZREMRANGEBYRANK". This is a typical
+pattern used with sorted sets when you want to cap the cardinality. A typical
+pattern for usage would be after new element is added with "ZADD", then the
+sorted set is trimmed with "ZREMRANGEBYRANK". This is very similar to the list
+pattern we saw previously. Let's take a look at an example. First, "Z" is added with
+a highest score of 26. The sorted set now contains five elements, but we want to
+retain four. "ZREMRANGEBYRANK" is then used to trim the lowest-scoring
+element, so 0 is passed to the start and stop index. With  "ZRANGE" we can now see "Z"
+is the highest score that's been added, and "A" with the lowest score has
+been removed. So why would you use lists over sorted
+sets for a capped collection? You need to consider the entirety of the
+functionality you need, since lists and sorted sets differ. For a
+use case like a leaderboard, where the players points determine their ranking
+on the leaderboard, sorted sets provide a simple way to update and maintain that
+order. Since you may only want to retain the top 10 or top 100, then the cost of
+"ZREMRANGEBYRANK" is just for the elements that are being removed. But time
+complexity of this command is dependent on the cardinality of the sorted set, so
+this needs to be taken in to account of. But when the elements retain outweighs the
+elements being removed, then this still can be efficient. With "LTRIM", you specify
+the range of elements you want to retain. The time complexity is a linear function
+of the elements removed, so trimming a very large set and retain just a few
+elements can be expensive. For an activity stream use case like Slack or
+a Facebook feed, a list can be used to retain the latest 10 or 20 messages. When
+your new message is added, "LTRIM" works efficiently because the majority of
+elements are retained. So that's how you can both use lists and sorted sets to
+create a capped collection with different usages and performance characteristics.
+Knowing the data and usage pattern will help make the correct selection.
